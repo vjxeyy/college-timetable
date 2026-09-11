@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
+  <title>College Timetable</title>
+  <style>
+/* ---------- Theme tokens (single black theme) ---------- */
+:root {
+  --bg: #000000;
+  --surface: #0a0a0a;
+  --surface-2: #121212;
+  --surface-3: #181818;
+  --border: #1c1c1c;
+  --border-strong: #2c2c2c;
+  --text: #ededed;
+  --muted: #8a8a8a;
+  --faint: #555555;
+  --accent: #ffffff;
+  --on-accent: #000000;
+  --danger: #ff6b6b;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --font: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  --mono: "JetBrains Mono", "Cascadia Mono", ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+}
+
+/* ---------- Base ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { background: var(--bg); }
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.5;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  scrollbar-color: var(--border-strong) transparent;
+}
+::selection { background: var(--accent); color: var(--on-accent); }
+
+h1, h2, h3 { margin: 0; line-height: 1.2; font-weight: 600; letter-spacing: -0.02em; }
+.muted { color: var(--muted); }
+[hidden] { display: none !important; }
+
+/* ---------- Header ---------- */
+.topbar {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 32px 24px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+.brand h1 { font-size: 1.6rem; }
+.brand p { margin: 6px 0 0; color: var(--muted); font-size: 13.5px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s;
+}
+.btn.primary { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+.btn.primary:hover { opacity: 0.86; }
+.btn.ghost { background: transparent; border-color: var(--border-strong); color: var(--text); }
+.btn.ghost:hover { background: var(--surface-3); }
+.btn.danger-ghost { background: transparent; border-color: var(--border-strong); color: var(--muted); }
+.btn.danger-ghost:hover { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, transparent); }
+.btn:focus-visible, .tab:focus-visible, .cell:focus-visible, .icon-btn:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- Layout ---------- */
+.layout {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 24px 48px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+@media (min-width: 980px) {
+  .layout { grid-template-columns: 330px minmax(0, 1fr); align-items: start; }
+  .panel { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
+}
+
+.panel, .board {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.panel { padding: 6px 18px 18px; }
+.board { padding: 22px; min-width: 0; }
+
+/* ---------- Tabs (underline style) ---------- */
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.tab {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 14px 4px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: inset 0 -1px 0 transparent;
+  transition: color 0.15s, box-shadow 0.15s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--text); box-shadow: inset 0 -1px 0 var(--accent); }
+.count { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+.tab.active .count { color: var(--muted); }
+
+/* ---------- Forms ---------- */
+.form { display: grid; gap: 14px; }
+.form label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.form .optional { color: var(--faint); font-weight: 400; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+input, select {
+  font: inherit;
+  font-size: 13.5px;
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  transition: border-color 0.15s;
+}
+input::placeholder { color: var(--faint); }
+input:hover, select:hover { border-color: #3a3a3a; }
+input:focus, select:focus { outline: none; border-color: var(--accent); }
+input[type="time"] { font-family: var(--mono); font-size: 13px; }
+input[type="color"] { padding: 4px; cursor: pointer; }
+input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 5px; }
+input[type="color"]::-moz-color-swatch { border: 0; border-radius: 5px; }
+select option { background: var(--surface-2); color: var(--text); }
+
+.form label.check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text);
+  cursor: pointer;
+}
+.check input { width: 15px; height: 15px; margin: 0; accent-color: var(--accent); }
+.form .btn.primary { height: 38px; margin-top: 2px; }
+
+/* ---------- Item lists ---------- */
+.list { list-style: none; margin: 20px 0 0; padding: 0; }
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 2px;
+  border-top: 1px solid var(--border);
+}
+.item-main { flex: 1; min-width: 0; }
+.item-title { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-meta { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.list-empty { padding: 20px 8px; text-align: center; color: var(--faint); font-size: 12.5px; border-top: 1px solid var(--border); }
+
+.swatch { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex-shrink: 0; }
+.badge {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 0 7px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  color: var(--muted);
+  margin-left: 8px;
+  vertical-align: 1px;
+}
+
+.icon-btn {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--faint);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.icon-btn:hover { background: var(--surface-3); color: var(--danger); }
+.icon-btn svg { width: 15px; height: 15px; }
+
+/* ---------- Timetable ---------- */
+.board-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin-bottom: 18px;
+}
+.board-head h2 { font-size: 1.05rem; }
+.hint { margin: 0; font-size: 12.5px; color: var(--faint); }
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.timetable {
+  width: 100%;
+  min-width: 780px;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+.timetable th, .timetable td {
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.timetable tr > :last-child { border-right: 0; }
+.timetable tbody tr:last-child > * { border-bottom: 0; }
+
+.timetable thead th {
+  padding: 12px 8px;
+  background: var(--surface);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--faint);
+}
+.timetable thead th.today { color: var(--accent); }
+.timetable thead th.today::after {
+  content: "";
+  display: block;
+  width: 4px;
+  height: 4px;
+  margin: 6px auto 0;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.day-short { display: none; }
+
+.time-col {
+  width: 108px;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--surface);
+}
+tbody .time-col {
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 400;
+  vertical-align: top;
+}
+.t-start { display: block; font-family: var(--mono); font-size: 12.5px; color: var(--text); }
+.t-end { display: block; font-family: var(--mono); font-size: 11.5px; color: var(--faint); }
+.t-label { display: block; font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+.timetable td { padding: 5px; height: 84px; vertical-align: top; }
+.timetable td.today { background: rgba(255, 255, 255, 0.018); }
+
+.cell {
+  font: inherit;
+  width: 100%;
+  height: 100%;
+  min-height: 72px;
+  padding: 9px 10px 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  color: var(--text);
+  background: transparent;
+  border: 1px dashed transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.cell:not(.filled):hover { border-color: var(--border-strong); }
+.cell:not(.filled):hover::after {
+  content: "+";
+  margin: auto;
+  font-size: 18px;
+  font-weight: 300;
+  color: var(--faint);
+}
+.cell.filled {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  box-shadow: inset 2px 0 0 var(--c);
+}
+.cell.filled:hover { background: var(--surface-3); border-color: var(--border-strong); }
+.cell-subject {
+  font-weight: 500;
+  font-size: 12.5px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.cell-code { font-family: var(--mono); font-size: 10.5px; color: var(--c); }
+.cell-meta {
+  margin-top: auto;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.break-row td {
+  height: 38px;
+  vertical-align: middle;
+  text-align: center;
+  font-size: 10.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: var(--faint);
+  background: var(--bg);
+}
+.break-row .time-col { background: var(--bg); }
+
+/* ---------- Empty state ---------- */
+.empty { text-align: center; padding: 72px 20px; color: var(--muted); }
+.empty h3 { color: var(--text); font-size: 1rem; margin-bottom: 8px; }
+.empty p { max-width: 360px; margin: 0 auto; font-size: 13px; }
+/* ---------- Dialog ---------- */
+dialog {
+  width: min(400px, calc(100vw - 32px));
+  padding: 0; /* padding lives on the form so backdrop clicks are the only clicks on <dialog> itself */
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+}
+dialog::backdrop { background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px); }
+dialog > .form { padding: 24px; }
+.dialog-head h3 { font-size: 1.1rem; }
+.dialog-head p { margin: 4px 0 6px; font-family: var(--mono); font-size: 12px; }
+.dialog-actions { display: flex; gap: 8px; margin-top: 8px; }
+.spacer { flex: 1; }
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translate(-50%, 16px);
+  opacity: 0;
+  pointer-events: none;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 13px;
+  font-weight: 500;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 10;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast[data-type="error"] { background: var(--danger); color: #000; }
+
+/* ---------- Small screens ---------- */
+@media (max-width: 640px) {
+  .topbar { padding: 22px 14px 16px; }
+  .brand h1 { font-size: 1.35rem; }
+  .actions { width: 100%; }
+  .actions .btn { flex: 1; padding: 8px 10px; }
+  .layout { padding: 0 12px 32px; gap: 12px; }
+  .panel { padding: 4px 14px 14px; }
+  .board { padding: 16px; }
+  .day-full { display: none; }
+  .day-short { display: inline; }
+  .timetable { min-width: 640px; }
+  .time-col { width: 80px; }
+  tbody .time-col { padding: 10px 8px; }
+  .dialog-actions { flex-wrap: wrap; }
+}
+
+/* ---------- Print: light colours on paper, timetable only ---------- */
+@media print {
+  :root {
+    --bg: #fff;
+    --surface: #fff;
+    --surface-2: #f6f6f6;
+    --border: #d9d9d9;
+    --text: #000;
+    --muted: #444;
+    --faint: #666;
+    --accent: #000;
+  }
+  .actions, .panel, .hint, .toast { display: none !important; }
+  .topbar { padding: 0 0 12px; }
+  .layout { display: block; padding: 0; }
+  .board { border: 0; padding: 0; }
+  .table-wrap { overflow: visible; }
+  .timetable { min-width: 0; }
+  .cell { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="brand">
+      <h1>College Timetable</h1>
+      <p>Plan subjects, time slots and rooms for the week</p>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn ghost" id="btn-sample">Load sample</button>
+      <button type="button" class="btn ghost" id="btn-print">Print</button>
+      <button type="button" class="btn danger-ghost" id="btn-reset">Reset all</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- Sidebar: manage subjects, slots and rooms -->
+    <aside class="panel">
+      <nav class="tabs" role="tablist">
+        <button type="button" role="tab" class="tab active" data-tab="subjects" aria-selected="true">
+          Subjects <span class="count" id="count-subjects">0</span>
+        </button>
+        <button type="button" role="tab" class="tab" data-tab="slots" aria-selected="false">
+          Time slots <span class="count" id="count-slots">0</span>
+        </button>
+        <button type="button" role="tab" class="tab" data-tab="rooms" aria-selected="false">
+          Rooms <span class="count" id="count-rooms">0</span>
+        </button>
+      </nav>
+
+      <section class="tab-panel" id="panel-subjects" role="tabpanel">
+        <form id="form-subject" class="form" autocomplete="off">
+          <label>Subject name
+            <input name="name" required maxlength="60" placeholder="e.g. Data Structures">
+          </label>
+          <div class="row">
+            <label>Code
+              <input name="code" maxlength="12" placeholder="CS201">
+            </label>
+            <label>Colour
+              <input type="color" name="color" value="#8b9cff">
+            </label>
+          </div>
+          <label>Faculty
+            <input name="faculty" maxlength="60" placeholder="e.g. Dr. Meera Iyer">
+          </label>
+          <button type="submit" class="btn primary">Add subject</button>
+        </form>
+        <ul class="list" id="list-subjects"></ul>
+      </section>
+
+      <section class="tab-panel" id="panel-slots" role="tabpanel" hidden>
+        <form id="form-slot" class="form" autocomplete="off">
+          <div class="row">
+            <label>Start
+              <input type="time" name="start" required value="09:00">
+            </label>
+            <label>End
+              <input type="time" name="end" required value="09:50">
+            </label>
+          </div>
+          <label><span>Label <span class="optional">(optional)</span></span>
+            <input name="label" maxlength="30" placeholder="e.g. Period 1, Lunch">
+          </label>
+          <label class="check">
+            <input type="checkbox" name="isBreak"> This is a break (no classes)
+          </label>
+          <button type="submit" class="btn primary">Add time slot</button>
+        </form>
+        <ul class="list" id="list-slots"></ul>
+      </section>
+
+      <section class="tab-panel" id="panel-rooms" role="tabpanel" hidden>
+        <form id="form-room" class="form" autocomplete="off">
+          <label>Room name / number
+            <input name="name" required maxlength="30" placeholder="e.g. LH-101">
+          </label>
+          <div class="row">
+            <label>Type
+              <select name="type">
+                <option>Classroom</option>
+                <option>Lab</option>
+                <option>Seminar hall</option>
+                <option>Tutorial room</option>
+              </select>
+            </label>
+            <label>Capacity
+              <input type="number" name="capacity" min="1" max="1000" placeholder="60">
+            </label>
+          </div>
+          <button type="submit" class="btn primary">Add room</button>
+        </form>
+        <ul class="list" id="list-rooms"></ul>
+      </section>
+    </aside>
+
+    <!-- Weekly timetable grid -->
+    <section class="board">
+      <div class="board-head">
+        <h2>Weekly schedule</h2>
+        <p class="hint">Click a cell to assign a subject and room.</p>
+      </div>
+      <div class="table-wrap">
+        <table class="timetable" id="timetable"></table>
+      </div>
+      <div class="empty" id="empty-state" hidden>
+        <h3>No time slots yet</h3>
+        <p>Add time slots in the sidebar to build your weekly grid, or load sample data to see how it works.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Dialog: assign subject + room to one cell -->
+  <dialog id="cell-dialog" aria-labelledby="cell-title">
+    <form id="form-cell" class="form">
+      <div class="dialog-head">
+        <h3 id="cell-title">Monday</h3>
+        <p id="cell-subtitle" class="muted">9:00 AM – 9:50 AM</p>
+      </div>
+      <label>Subject
+        <select name="subjectId" required></select>
+      </label>
+      <label>Room
+        <select name="roomId"></select>
+      </label>
+      <div class="dialog-actions">
+        <button type="button" class="btn danger-ghost" id="btn-cell-clear">Remove class</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn ghost" id="btn-cell-cancel">Cancel</button>
+        <button type="submit" class="btn primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+
+  <script>
+// Persistence layer: the only file that touches localStorage.
+const TimetableStore = (() => {
+  const KEY = 'college-timetable:v1';
+
+  const empty = () => ({ subjects: [], slots: [], rooms: [], entries: {} });
+
+  function load() {
+    try {
+      const data = JSON.parse(localStorage.getItem(KEY));
+      if (!data || typeof data !== 'object') return empty();
+      return {
+        subjects: Array.isArray(data.subjects) ? data.subjects : [],
+        slots: Array.isArray(data.slots) ? data.slots : [],
+        rooms: Array.isArray(data.rooms) ? data.rooms : [],
+        entries: data.entries && typeof data.entries === 'object' ? data.entries : {},
+      };
+    } catch {
+      return empty();
+    }
+  }
+
+  function save(state) {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(state));
+    } catch {
+      // Storage full or blocked (e.g. private mode) — the app keeps working in memory.
+    }
+  }
+
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+  return { load, save, empty, uid };
+})();
+
+(() => {
+  'use strict';
+
+  const DAYS = [
+    { key: 'mon', label: 'Monday' },
+    { key: 'tue', label: 'Tuesday' },
+    { key: 'wed', label: 'Wednesday' },
+    { key: 'thu', label: 'Thursday' },
+    { key: 'fri', label: 'Friday' },
+    { key: 'sat', label: 'Saturday' },
+  ];
+  // Soft tones that stay readable on the black theme.
+  const PALETTE = ['#8b9cff', '#5cc8d8', '#6fcf97', '#e8b86a', '#f08bb0', '#b19cf5', '#f28b82', '#62d0b8', '#7fb2ff', '#c3d96b'];
+  const TRASH_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>';
+
+  let state = TimetableStore.load();
+  let activeCell = null; // { day, slotId } being edited in the dialog
+
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => document.querySelectorAll(sel);
+
+  // ---------- Helpers ----------
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const safeColor = (c) => (/^#[0-9a-f]{6}$/i.test(c) ? c : null);
+  // Subjects saved without a colour fall back to a palette tone based on their position.
+  const subjectColor = (s) => safeColor(s.color) || PALETTE[Math.max(0, state.subjects.indexOf(s)) % PALETTE.length];
+  const plural = (n, one, many = one + 's') => `${n} ${n === 1 ? one : many}`;
+  const findById = (list, id) => list.find((x) => x.id === id);
+  const cellKey = (day, slotId) => `${day}|${slotId}`;
+  const entriesWhere = (pred) => Object.entries(state.entries).filter(([key, e]) => pred(e, key));
+
+  const toMinutes = (t) => {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  };
+  const fromMinutes = (mins) => {
+    const clamped = Math.min(mins, 23 * 60 + 59);
+    return `${String(Math.floor(clamped / 60)).padStart(2, '0')}:${String(clamped % 60).padStart(2, '0')}`;
+  };
+  const formatTime = (t) => {
+    const [h, m] = t.split(':').map(Number);
+    return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
+  };
+  const slotRange = (s) => `${formatTime(s.start)} – ${formatTime(s.end)}`;
+  const sortedSlots = () => [...state.slots].sort((a, b) => toMinutes(a.start) - toMinutes(b.start));
+
+  const formValues = (form) =>
+    Object.fromEntries([...new FormData(form)].map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v]));
+
+  function commit(message) {
+    TimetableStore.save(state);
+    render();
+    if (message) toast(message);
+  }
+
+  let toastTimer;
+  function toast(message, type = 'info') {
+    const el = $('#toast');
+    el.textContent = message;
+    el.dataset.type = type;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+  }
+
+  const deleteButton = (id, name) =>
+    `<button type="button" class="icon-btn" data-delete="${esc(id)}" aria-label="Delete ${esc(name)}" title="Delete">${TRASH_ICON}</button>`;
+  const emptyItem = (text) => `<li class="list-empty">${text}</li>`;
+
+  // ---------- Tabs ----------
+  function showTab(name) {
+    $$('.tab').forEach((tab) => {
+      const active = tab.dataset.tab === name;
+      tab.classList.toggle('active', active);
+      tab.setAttribute('aria-selected', String(active));
+    });
+    $$('.tab-panel').forEach((panel) => (panel.hidden = panel.id !== `panel-${name}`));
+  }
+  $$('.tab').forEach((tab) => tab.addEventListener('click', () => showTab(tab.dataset.tab)));
+
+  // ---------- Add forms ----------
+  $('#form-subject').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const { name, code, faculty, color } = formValues(form);
+    if (state.subjects.some((s) => s.name.toLowerCase() === name.toLowerCase())) {
+      return toast('That subject already exists', 'error');
+    }
+    state.subjects.push({ id: TimetableStore.uid(), name, code, faculty, color: safeColor(color) || PALETTE[0] });
+    form.reset();
+    form.elements.color.value = PALETTE[state.subjects.length % PALETTE.length];
+    form.elements.name.focus();
+    commit('Subject added');
+  });
+
+  $('#form-slot').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const { start, end, label, isBreak } = formValues(form);
+    const startMin = toMinutes(start);
+    const endMin = toMinutes(end);
+    if (endMin <= startMin) return toast('End time must be after start time', 'error');
+
+    const clash = state.slots.find((s) => startMin < toMinutes(s.end) && toMinutes(s.start) < endMin);
+    if (clash) return toast(`Overlaps with ${slotRange(clash)}`, 'error');
+
+    state.slots.push({ id: TimetableStore.uid(), start, end, label, isBreak: Boolean(isBreak) });
+
+    // Pre-fill the next slot so adding a full day is quick.
+    form.reset();
+    form.elements.start.value = end;
+    form.elements.end.value = fromMinutes(endMin + (endMin - startMin));
+    commit('Time slot added');
+  });
+
+  $('#form-room').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const { name, type, capacity } = formValues(form);
+    if (state.rooms.some((r) => r.name.toLowerCase() === name.toLowerCase())) {
+      return toast('That room already exists', 'error');
+    }
+    state.rooms.push({ id: TimetableStore.uid(), name, type, capacity: capacity ? Number(capacity) : null });
+    form.reset();
+    form.elements.name.focus();
+    commit('Room added');
+  });
+
+  // ---------- Delete (event delegation) ----------
+  function onDelete(listSelector, handler) {
+    $(listSelector).addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-delete]');
+      if (btn) handler(btn.dataset.delete);
+    });
+  }
+
+  onDelete('#list-subjects', (id) => {
+    const subject = findById(state.subjects, id);
+    const used = entriesWhere((e) => e.subjectId === id);
+    if (used.length && !confirm(`"${subject.name}" is scheduled in ${plural(used.length, 'class', 'classes')}. Delete it and remove those classes?`)) return;
+    used.forEach(([key]) => delete state.entries[key]);
+    state.subjects = state.subjects.filter((s) => s.id !== id);
+    commit('Subject deleted');
+  });
+
+  onDelete('#list-slots', (id) => {
+    const used = entriesWhere((_, key) => key.endsWith(`|${id}`));
+    if (used.length && !confirm(`This slot has ${plural(used.length, 'class', 'classes')} scheduled. Delete it anyway?`)) return;
+    used.forEach(([key]) => delete state.entries[key]);
+    state.slots = state.slots.filter((s) => s.id !== id);
+    commit('Time slot deleted');
+  });
+
+  onDelete('#list-rooms', (id) => {
+    const room = findById(state.rooms, id);
+    const used = entriesWhere((e) => e.roomId === id);
+    if (used.length && !confirm(`"${room.name}" is used by ${plural(used.length, 'class', 'classes')}. Delete it? Those classes will keep their subject but lose the room.`)) return;
+    used.forEach(([, entry]) => (entry.roomId = ''));
+    state.rooms = state.rooms.filter((r) => r.id !== id);
+    commit('Room deleted');
+  });
+
+  // ---------- Cell dialog ----------
+  const dialog = $('#cell-dialog');
+  const cellForm = $('#form-cell');
+
+  function openCellDialog(day, slotId) {
+    if (!state.subjects.length) {
+      showTab('subjects');
+      $('#form-subject').elements.name.focus();
+      return toast('Add a subject first', 'error');
+    }
+    activeCell = { day, slotId };
+    const slot = findById(state.slots, slotId);
+    const entry = state.entries[cellKey(day, slotId)] || {};
+
+    $('#cell-title').textContent = DAYS.find((d) => d.key === day).label;
+    $('#cell-subtitle').textContent = slotRange(slot) + (slot.label ? ` · ${slot.label}` : '');
+
+    cellForm.elements.subjectId.innerHTML =
+      '<option value="">Select a subject…</option>' +
+      state.subjects.map((s) => `<option value="${esc(s.id)}">${esc(s.name)}${s.code ? ` (${esc(s.code)})` : ''}</option>`).join('');
+    cellForm.elements.roomId.innerHTML =
+      '<option value="">No room</option>' +
+      state.rooms.map((r) => `<option value="${esc(r.id)}">${esc(r.name)}${r.type ? ` · ${esc(r.type)}` : ''}</option>`).join('');
+
+    cellForm.elements.subjectId.value = entry.subjectId || '';
+    cellForm.elements.roomId.value = entry.roomId || '';
+    $('#btn-cell-clear').hidden = !entry.subjectId;
+    dialog.showModal();
+  }
+
+  cellForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const { subjectId, roomId } = formValues(cellForm);
+    state.entries[cellKey(activeCell.day, activeCell.slotId)] = { subjectId, roomId };
+    dialog.close();
+    commit('Class saved');
+  });
+
+  $('#btn-cell-clear').addEventListener('click', () => {
+    delete state.entries[cellKey(activeCell.day, activeCell.slotId)];
+    dialog.close();
+    commit('Class removed');
+  });
+
+  $('#btn-cell-cancel').addEventListener('click', () => dialog.close());
+  // Browsers close <dialog> on Escape natively; this covers embedded browsers that don't.
+  dialog.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') dialog.close();
+  });
+  dialog.addEventListener('click', (e) => {
+    if (e.target === dialog) dialog.close(); // click on backdrop
+  });
+
+  $('#timetable').addEventListener('click', (e) => {
+    const cell = e.target.closest('.cell');
+    if (cell) openCellDialog(cell.dataset.day, cell.dataset.slot);
+  });
+
+  // ---------- Header actions ----------
+  $('#btn-print').addEventListener('click', () => window.print());
+
+  $('#btn-reset').addEventListener('click', () => {
+    if (!confirm('Delete all subjects, time slots, rooms and classes? This cannot be undone.')) return;
+    state = TimetableStore.empty();
+    commit('Everything cleared');
+  });
+
+  $('#btn-sample').addEventListener('click', () => {
+    const hasData = state.subjects.length || state.slots.length || state.rooms.length;
+    if (hasData && !confirm('Replace your current timetable with sample data?')) return;
+    state = sampleData();
+    commit('Sample timetable loaded');
+  });
+
+  // ---------- Rendering ----------
+  function render() {
+    renderSubjects();
+    renderSlots();
+    renderRooms();
+    renderTimetable();
+    $('#count-subjects').textContent = state.subjects.length;
+    $('#count-slots').textContent = state.slots.length;
+    $('#count-rooms').textContent = state.rooms.length;
+  }
+
+  function renderSubjects() {
+    $('#list-subjects').innerHTML = state.subjects.length
+      ? state.subjects.map((s) => {
+          const count = entriesWhere((e) => e.subjectId === s.id).length;
+          const meta = [s.code, s.faculty, `${plural(count, 'class', 'classes')}/week`].filter(Boolean).join(' · ');
+          return `<li class="item">
+            <span class="swatch" style="--c:${subjectColor(s)}"></span>
+            <div class="item-main">
+              <div class="item-title">${esc(s.name)}</div>
+              <div class="item-meta">${esc(meta)}</div>
+            </div>
+            ${deleteButton(s.id, s.name)}
+          </li>`;
+        }).join('')
+      : emptyItem('No subjects yet. Add your first one above.');
+  }
+
+  function renderSlots() {
+    $('#list-slots').innerHTML = state.slots.length
+      ? sortedSlots().map((s) => {
+          const minutes = toMinutes(s.end) - toMinutes(s.start);
+          const meta = [s.label, `${minutes} min`].filter(Boolean).join(' · ');
+          return `<li class="item">
+            <div class="item-main">
+              <div class="item-title">${slotRange(s)}${s.isBreak ? '<span class="badge">Break</span>' : ''}</div>
+              <div class="item-meta">${esc(meta)}</div>
+            </div>
+            ${deleteButton(s.id, slotRange(s))}
+          </li>`;
+        }).join('')
+      : emptyItem('No time slots yet. Add periods and breaks above.');
+  }
+
+  function renderRooms() {
+    $('#list-rooms').innerHTML = state.rooms.length
+      ? state.rooms.map((r) => {
+          const count = entriesWhere((e) => e.roomId === r.id).length;
+          const meta = [r.type, r.capacity ? `${r.capacity} seats` : '', `${plural(count, 'class', 'classes')}/week`].filter(Boolean).join(' · ');
+          return `<li class="item">
+            <div class="item-main">
+              <div class="item-title">${esc(r.name)}</div>
+              <div class="item-meta">${esc(meta)}</div>
+            </div>
+            ${deleteButton(r.id, r.name)}
+          </li>`;
+        }).join('')
+      : emptyItem('No rooms yet. Add classrooms and labs above.');
+  }
+
+  function renderTimetable() {
+    const slots = sortedSlots();
+    const table = $('#timetable');
+    $('#empty-state').hidden = slots.length > 0;
+    $('.table-wrap').hidden = slots.length === 0;
+    if (!slots.length) {
+      table.innerHTML = '';
+      return;
+    }
+
+    const todayKey = DAYS[(new Date().getDay() + 6) % 7]?.key; // Sunday → undefined
+    const todayClass = (day) => (day.key === todayKey ? ' class="today"' : '');
+
+    const head = `<thead><tr>
+      <th scope="col" class="time-col">Time</th>
+      ${DAYS.map((d) => `<th scope="col"${todayClass(d)}><span class="day-full">${d.label}</span><span class="day-short">${d.label.slice(0, 3)}</span></th>`).join('')}
+    </tr></thead>`;
+
+    const rows = slots.map((slot) => {
+      const timeCell = `<th scope="row" class="time-col">
+        <span class="t-start">${formatTime(slot.start)}</span>
+        <span class="t-end">${formatTime(slot.end)}</span>
+        ${slot.label && !slot.isBreak ? `<span class="t-label">${esc(slot.label)}</span>` : ''}
+      </th>`;
+
+      if (slot.isBreak) {
+        return `<tr class="break-row">${timeCell}<td colspan="${DAYS.length}">${esc(slot.label || 'Break')}</td></tr>`;
+      }
+
+      const cells = DAYS.map((day) => {
+        const entry = state.entries[cellKey(day.key, slot.id)];
+        const subject = entry && findById(state.subjects, entry.subjectId);
+        const where = `${day.label}, ${slotRange(slot)}`;
+        const attrs = `type="button" data-day="${day.key}" data-slot="${esc(slot.id)}"`;
+
+        if (!subject) {
+          return `<td${todayClass(day)}><button ${attrs} class="cell" aria-label="Add class: ${where}"></button></td>`;
+        }
+        const room = findById(state.rooms, entry.roomId);
+        const meta = [room ? room.name : 'No room', subject.faculty].filter(Boolean).join(' · ');
+        return `<td${todayClass(day)}>
+          <button ${attrs} class="cell filled" style="--c:${subjectColor(subject)}" aria-label="${esc(subject.name)}, ${esc(meta)}, ${where}. Edit">
+            <span class="cell-subject">${esc(subject.name)}</span>
+            ${subject.code ? `<span class="cell-code">${esc(subject.code)}</span>` : ''}
+            <span class="cell-meta">${esc(meta)}</span>
+          </button>
+        </td>`;
+      }).join('');
+
+      return `<tr>${timeCell}${cells}</tr>`;
+    }).join('');
+
+    table.innerHTML = `${head}<tbody>${rows}</tbody>`;
+  }
+
+  // ---------- Sample data ----------
+  function sampleData() {
+    const subjects = [
+      { name: 'Data Structures', code: 'CS201', faculty: 'Dr. Meera Iyer' },
+      { name: 'Database Systems', code: 'CS202', faculty: 'Prof. Arjun Nair' },
+      { name: 'Operating Systems', code: 'CS203', faculty: 'Dr. Kavya Rao' },
+      { name: 'Discrete Mathematics', code: 'MA201', faculty: 'Prof. S. Kumar' },
+      { name: 'Computer Networks', code: 'CS204', faculty: 'Dr. Rahul Menon' },
+      { name: 'Data Structures Lab', code: 'CS251', faculty: 'Dr. Meera Iyer' },
+    ].map((s, i) => ({ id: TimetableStore.uid(), ...s, color: PALETTE[i] }));
+
+    const rooms = [
+      { name: 'LH-101', type: 'Classroom', capacity: 60 },
+      { name: 'LH-102', type: 'Classroom', capacity: 60 },
+      { name: 'CS Lab 2', type: 'Lab', capacity: 40 },
+      { name: 'Seminar Hall', type: 'Seminar hall', capacity: 120 },
+    ].map((r) => ({ id: TimetableStore.uid(), ...r }));
+
+    const slots = [
+      ['09:00', '09:50', 'Period 1'],
+      ['09:50', '10:40', 'Period 2'],
+      ['10:40', '11:00', 'Short break', true],
+      ['11:00', '11:50', 'Period 3'],
+      ['11:50', '12:40', 'Period 4'],
+      ['12:40', '13:30', 'Lunch', true],
+      ['13:30', '14:20', 'Period 5'],
+      ['14:20', '15:10', 'Period 6'],
+    ].map(([start, end, label, isBreak = false]) => ({ id: TimetableStore.uid(), start, end, label, isBreak }));
+
+    // Subject index per teaching period (-1 = free period).
+    const plan = {
+      mon: [0, 1, 3, 2, 5, 5],
+      tue: [1, 0, 2, 4, 3, -1],
+      wed: [3, 2, 0, 1, 4, -1],
+      thu: [4, 3, 1, 0, 5, 5],
+      fri: [2, 4, 3, 1, 0, -1],
+      sat: [0, 3, -1, -1, -1, -1],
+    };
+    const roomFor = (subjectIndex, dayIndex) =>
+      subjectIndex === 5 ? rooms[2] : subjectIndex === 4 ? rooms[3] : rooms[dayIndex % 2];
+
+    const teaching = slots.filter((s) => !s.isBreak);
+    const entries = {};
+    DAYS.forEach((day, dayIndex) => {
+      plan[day.key].forEach((subjectIndex, period) => {
+        if (subjectIndex < 0) return;
+        entries[cellKey(day.key, teaching[period].id)] = {
+          subjectId: subjects[subjectIndex].id,
+          roomId: roomFor(subjectIndex, dayIndex).id,
+        };
+      });
+    });
+
+    return { subjects, slots, rooms, entries };
+  }
+
+  $('#form-subject').elements.color.value = PALETTE[state.subjects.length % PALETTE.length];
+  render();
+})();
+
+  </script>
+</body>
+</html>

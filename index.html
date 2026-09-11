@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
+  <title>College Timetable</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>College Timetable</h1>
+      <p>Plan subjects, time slots and rooms for the week</p>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn ghost" id="btn-sample">Load sample</button>
+      <button type="button" class="btn ghost" id="btn-print">Print</button>
+      <button type="button" class="btn danger-ghost" id="btn-reset">Reset all</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- Sidebar: manage subjects, slots and rooms -->
+    <aside class="panel">
+      <nav class="tabs" role="tablist">
+        <button type="button" role="tab" class="tab active" data-tab="subjects" aria-selected="true">
+          Subjects <span class="count" id="count-subjects">0</span>
+        </button>
+        <button type="button" role="tab" class="tab" data-tab="slots" aria-selected="false">
+          Time slots <span class="count" id="count-slots">0</span>
+        </button>
+        <button type="button" role="tab" class="tab" data-tab="rooms" aria-selected="false">
+          Rooms <span class="count" id="count-rooms">0</span>
+        </button>
+      </nav>
+
+      <section class="tab-panel" id="panel-subjects" role="tabpanel">
+        <form id="form-subject" class="form" autocomplete="off">
+          <label>Subject name
+            <input name="name" required maxlength="60" placeholder="e.g. Data Structures">
+          </label>
+          <div class="row">
+            <label>Code
+              <input name="code" maxlength="12" placeholder="CS201">
+            </label>
+            <label>Colour
+              <input type="color" name="color" value="#8b9cff">
+            </label>
+          </div>
+          <label>Faculty
+            <input name="faculty" maxlength="60" placeholder="e.g. Dr. Meera Iyer">
+          </label>
+          <button type="submit" class="btn primary">Add subject</button>
+        </form>
+        <ul class="list" id="list-subjects"></ul>
+      </section>
+
+      <section class="tab-panel" id="panel-slots" role="tabpanel" hidden>
+        <form id="form-slot" class="form" autocomplete="off">
+          <div class="row">
+            <label>Start
+              <input type="time" name="start" required value="09:00">
+            </label>
+            <label>End
+              <input type="time" name="end" required value="09:50">
+            </label>
+          </div>
+          <label><span>Label <span class="optional">(optional)</span></span>
+            <input name="label" maxlength="30" placeholder="e.g. Period 1, Lunch">
+          </label>
+          <label class="check">
+            <input type="checkbox" name="isBreak"> This is a break (no classes)
+          </label>
+          <button type="submit" class="btn primary">Add time slot</button>
+        </form>
+        <ul class="list" id="list-slots"></ul>
+      </section>
+
+      <section class="tab-panel" id="panel-rooms" role="tabpanel" hidden>
+        <form id="form-room" class="form" autocomplete="off">
+          <label>Room name / number
+            <input name="name" required maxlength="30" placeholder="e.g. LH-101">
+          </label>
+          <div class="row">
+            <label>Type
+              <select name="type">
+                <option>Classroom</option>
+                <option>Lab</option>
+                <option>Seminar hall</option>
+                <option>Tutorial room</option>
+              </select>
+            </label>
+            <label>Capacity
+              <input type="number" name="capacity" min="1" max="1000" placeholder="60">
+            </label>
+          </div>
+          <button type="submit" class="btn primary">Add room</button>
+        </form>
+        <ul class="list" id="list-rooms"></ul>
+      </section>
+    </aside>
+
+    <!-- Weekly timetable grid -->
+    <section class="board">
+      <div class="board-head">
+        <h2>Weekly schedule</h2>
+        <p class="hint">Click a cell to assign a subject and room.</p>
+      </div>
+      <div class="table-wrap">
+        <table class="timetable" id="timetable"></table>
+      </div>
+      <div class="empty" id="empty-state" hidden>
+        <h3>No time slots yet</h3>
+        <p>Add time slots in the sidebar to build your weekly grid, or load sample data to see how it works.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Dialog: assign subject + room to one cell -->
+  <dialog id="cell-dialog" aria-labelledby="cell-title">
+    <form id="form-cell" class="form">
+      <div class="dialog-head">
+        <h3 id="cell-title">Monday</h3>
+        <p id="cell-subtitle" class="muted">9:00 AM – 9:50 AM</p>
+      </div>
+      <label>Subject
+        <select name="subjectId" required></select>
+      </label>
+      <label>Room
+        <select name="roomId"></select>
+      </label>
+      <div class="dialog-actions">
+        <button type="button" class="btn danger-ghost" id="btn-cell-clear">Remove class</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn ghost" id="btn-cell-cancel">Cancel</button>
+        <button type="submit" class="btn primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
