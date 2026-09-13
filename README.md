@@ -51,23 +51,3 @@ college-timetable/
 │   └── app.js                     # Forms, validation, timetable rendering and events
 └── college-timetable-single.html  # The whole app in one file
 ```
-
-## Run it locally
-
-Download or clone the repo, then open `index.html` in your browser. That's it.
-
-You can also serve the folder locally:
-
-```bash
-python -m http.server
-```
-
-Then visit http://localhost:8000. The single-file version, `college-timetable-single.html`, works by simply double-clicking it.
-
-## Deployment
-
-The site is hosted on Vercel and updates automatically every time changes are pushed to the `main` branch.
-
-## Author
-
-**Vijayvarshan**, GitHub [@vjxeyy](https://github.com/vjxeyy)
