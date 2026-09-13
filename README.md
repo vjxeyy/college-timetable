@@ -31,8 +31,6 @@ This project was made by vibe coding: I gave Claude instructions and feedback, a
 5. Deployed it on Vercel and uploaded it to GitHub
 6. Added Vercel Web Analytics
 
-**Tool used:** [Claude Code](https://claude.com/claude-code)
-
 ## Tech stack
 
 - HTML, CSS and plain JavaScript
