@@ -11,14 +11,14 @@ A black, minimal weekly timetable planner for college classes. Add your subjects
 
 ## Features
 
-- **Subjects** with a course code, faculty name and a colour
-- **Time slots** for periods and breaks. Breaks like *Lunch* span the whole row, the next slot is pre-filled for you, and overlapping slots are rejected
-- **Rooms** with a type (classroom, lab, seminar hall) and capacity, plus how many classes each room has per week
-- **Weekly grid** from Monday to Saturday. Click a cell to add or edit a class, and today's column is highlighted
-- **Saves automatically** in your browser, with no account or server needed
-- **Load sample**, **Print** (prints a clean light version) and **Reset all**
-- **Works on phones**, not just desktops
-- **Vercel Web Analytics** to count visitors
+- Subjects with a course code, faculty name and a colour
+- Time slots for periods and breaks. Breaks like Lunch span the whole row, the next slot is pre-filled for you, and overlapping slots are rejected
+- Rooms with a type (classroom, lab, seminar hall) and capacity, plus how many classes each room has per week
+- Weekly grid from Monday to Saturday. Click a cell to add or edit a class, and today's column is highlighted
+- Saves automatically in your browser, with no account or server needed
+- Load sample, Print (prints a clean light version) and Reset all
+- Works on phones, not just desktops
+- Vercel Web Analytics to count visitors
 
 ## How it was built
 
