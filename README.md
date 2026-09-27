@@ -4,6 +4,8 @@ A minimal, charcoal-themed weekly timetable planner for college classes. Set you
 
 **Live demo:** https://college-timetable-vjxeyy.vercel.app
 
+**Project overview (PDF):** [docs/College-Timetable-Project-Overview.pdf](docs/College-Timetable-Project-Overview.pdf)
+
 > **Built entirely by vibe coding with Claude.**
 > I described what I wanted in plain English, and Claude (in Claude Code) wrote every line of the HTML, CSS and JavaScript. No code in this project was written by hand.
 
@@ -52,5 +54,7 @@ college-timetable/
 ├── js/
 │   ├── storage.js                 # Saves and loads data in the browser (localStorage)
 │   └── app.js                     # Forms, validation, timetable rendering and events
-└── college-timetable-single.html  # The whole app in one file
+├── college-timetable-single.html  # The whole app in one file
+└── docs/
+    └── College-Timetable-Project-Overview.pdf  # 5-page project overview
 ```
