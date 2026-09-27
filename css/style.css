@@ -50,11 +50,26 @@ h1, h2, h3 { margin: 0; line-height: 1.2; font-weight: 600; letter-spacing: -0.0
   justify-content: space-between;
   gap: 16px;
 }
-.brand-line { display: flex; align-items: center; gap: 4px; }
 .brand h1 { font-size: 1.6rem; }
-#btn-class { width: 26px; height: 26px; }
-#btn-class svg { width: 13px; height: 13px; }
-.brand-class { margin: 6px 0 0; font-size: 15px; font-weight: 600; color: var(--text); }
+.class-line {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+.class-line svg { width: 13px; height: 13px; color: var(--faint); transition: color 0.15s; }
+.class-line:hover svg, .class-line:focus-visible svg { color: var(--text); }
+.class-line:focus-visible { outline: 1px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.class-line.is-empty { color: var(--muted); font-weight: 500; }
 .brand-sub { margin: 4px 0 0; color: var(--muted); font-size: 13.5px; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
@@ -219,7 +234,7 @@ select option { background: var(--surface-2); color: var(--text); }
   transition: color 0.15s, background 0.15s;
 }
 .icon-btn:hover { background: var(--surface-3); color: var(--danger); }
-.icon-btn[data-edit]:hover, #btn-class:hover { color: var(--text); }
+.icon-btn[data-edit]:hover { color: var(--text); }
 .item.editing { background: var(--surface-2); }
 .icon-btn svg { width: 15px; height: 15px; }
 
@@ -429,7 +444,7 @@ dialog > .form { padding: 24px; }
     --faint: #666;
     --accent: #000;
   }
-  .actions, .panel, .hint, .toast, #btn-class, .brand-sub { display: none !important; }
+  .actions, .panel, .hint, .toast, .brand-sub, .class-line svg, .class-line.is-empty { display: none !important; }
   .topbar { padding: 0 0 12px; }
   .layout { display: block; padding: 0; }
   .board { border: 0; padding: 0; }

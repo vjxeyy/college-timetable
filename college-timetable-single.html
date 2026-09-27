@@ -58,11 +58,26 @@ h1, h2, h3 { margin: 0; line-height: 1.2; font-weight: 600; letter-spacing: -0.0
   justify-content: space-between;
   gap: 16px;
 }
-.brand-line { display: flex; align-items: center; gap: 4px; }
 .brand h1 { font-size: 1.6rem; }
-#btn-class { width: 26px; height: 26px; }
-#btn-class svg { width: 13px; height: 13px; }
-.brand-class { margin: 6px 0 0; font-size: 15px; font-weight: 600; color: var(--text); }
+.class-line {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+.class-line svg { width: 13px; height: 13px; color: var(--faint); transition: color 0.15s; }
+.class-line:hover svg, .class-line:focus-visible svg { color: var(--text); }
+.class-line:focus-visible { outline: 1px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.class-line.is-empty { color: var(--muted); font-weight: 500; }
 .brand-sub { margin: 4px 0 0; color: var(--muted); font-size: 13.5px; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
@@ -227,7 +242,7 @@ select option { background: var(--surface-2); color: var(--text); }
   transition: color 0.15s, background 0.15s;
 }
 .icon-btn:hover { background: var(--surface-3); color: var(--danger); }
-.icon-btn[data-edit]:hover, #btn-class:hover { color: var(--text); }
+.icon-btn[data-edit]:hover { color: var(--text); }
 .item.editing { background: var(--surface-2); }
 .icon-btn svg { width: 15px; height: 15px; }
 
@@ -437,7 +452,7 @@ dialog > .form { padding: 24px; }
     --faint: #666;
     --accent: #000;
   }
-  .actions, .panel, .hint, .toast, #btn-class, .brand-sub { display: none !important; }
+  .actions, .panel, .hint, .toast, .brand-sub, .class-line svg, .class-line.is-empty { display: none !important; }
   .topbar { padding: 0 0 12px; }
   .layout { display: block; padding: 0; }
   .board { border: 0; padding: 0; }
@@ -453,7 +468,8 @@ dialog > .form { padding: 24px; }
   /* Let the table's own grid lines separate classes: no box around each one. */
   .timetable td { padding: 0; }
   .cell { border-radius: 0; padding: 9px 10px; }
-  .cell.filled { background: none; border: 0; box-shadow: inset 3px 0 0 var(--c); }
+  .cell.filled { background: none; border: 0; box-shadow: none; }
+  .timetable td.has-class { box-shadow: inset 3px 0 0 var(--c); print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }
 
   </style>
@@ -461,13 +477,11 @@ dialog > .form { padding: 24px; }
 <body>
   <header class="topbar">
     <div class="brand">
-      <div class="brand-line">
-        <h1 id="brand-title">College Timetable</h1>
-        <button type="button" class="icon-btn" id="btn-class" aria-label="Change class name" title="Change class name">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-        </button>
-      </div>
-      <p class="brand-class" id="brand-class" hidden></p>
+      <h1 id="brand-title">College Timetable</h1>
+      <button type="button" class="class-line" id="btn-class" title="Change class">
+        <span id="brand-class"></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      </button>
       <p class="brand-sub">Plan subjects and time slots for the week</p>
     </div>
     <div class="actions">
@@ -982,9 +996,10 @@ const TimetableStore = (() => {
   }
 
   function applyBrand() {
-    const line = $('#brand-class');
-    line.textContent = state.className || '';
-    line.hidden = !state.className;
+    const button = $('#btn-class');
+    $('#brand-class').textContent = state.className || 'Add your class';
+    button.classList.toggle('is-empty', !state.className);
+    button.setAttribute('aria-label', state.className ? `Change class: ${state.className}` : 'Add your class');
     document.title = state.className ? `${state.className} Timetable` : 'College Timetable';
   }
 
@@ -1062,8 +1077,9 @@ const TimetableStore = (() => {
           return `<td${todayClass(day)}><button ${attrs} class="cell" aria-label="Add class: ${where}"></button></td>`;
         }
         const staff = subject.faculty || '';
-        return `<td${todayClass(day)}>
-          <button ${attrs} class="cell filled" style="--c:${subjectColor(subject)}" aria-label="${esc(subject.name)}, ${esc(staff)}, ${where}. Edit">
+        // The colour lives on the cell so print can draw a bar the full height of the row.
+        return `<td class="${day.key === todayKey ? 'today ' : ''}has-class" style="--c:${subjectColor(subject)}">
+          <button ${attrs} class="cell filled" aria-label="${esc(subject.name)}, ${esc(staff)}, ${where}. Edit">
             <span class="cell-subject">${esc(subject.name)}</span>
             ${subject.code ? `<span class="cell-code">${esc(subject.code)}</span>` : ''}
             ${staff ? `<span class="cell-meta">${esc(staff)}</span>` : ''}

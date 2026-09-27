@@ -343,9 +343,10 @@
   }
 
   function applyBrand() {
-    const line = $('#brand-class');
-    line.textContent = state.className || '';
-    line.hidden = !state.className;
+    const button = $('#btn-class');
+    $('#brand-class').textContent = state.className || 'Add your class';
+    button.classList.toggle('is-empty', !state.className);
+    button.setAttribute('aria-label', state.className ? `Change class: ${state.className}` : 'Add your class');
     document.title = state.className ? `${state.className} Timetable` : 'College Timetable';
   }
 
