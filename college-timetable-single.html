@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#000000">
+  <meta name="theme-color" content="#111111">
   <title>College Timetable</title>
   <style>
 /* ---------- Theme tokens (single black theme) ---------- */
 :root {
-  --bg: #000000;
-  --surface: #0a0a0a;
-  --surface-2: #121212;
-  --surface-3: #181818;
-  --border: #1c1c1c;
-  --border-strong: #2c2c2c;
+  --bg: #111111;
+  --surface: #181818;
+  --surface-2: #1f1f1f;
+  --surface-3: #262626;
+  --border: #262626;
+  --border-strong: #363636;
   --text: #ededed;
   --muted: #8a8a8a;
-  --faint: #555555;
+  --faint: #6a6a6a;
   --accent: #ffffff;
   --on-accent: #000000;
   --danger: #ff6b6b;
@@ -178,7 +178,7 @@ input, select {
   transition: border-color 0.15s;
 }
 input::placeholder { color: var(--faint); }
-input:hover, select:hover { border-color: #3a3a3a; }
+input:hover, select:hover { border-color: #474747; }
 input:focus, select:focus { outline: none; border-color: var(--accent); }
 input[type="time"] { font-family: var(--mono); font-size: 13px; }
 input[type="color"] { padding: 4px; cursor: pointer; }
@@ -443,6 +443,7 @@ dialog > .form { padding: 24px; }
 /* ---------- Print: light colours on paper, timetable only ---------- */
 @media print {
   :root {
+    color-scheme: light;
     --bg: #fff;
     --surface: #fff;
     --surface-2: #f6f6f6;
