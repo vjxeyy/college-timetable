@@ -423,8 +423,9 @@
           return `<td${todayClass(day)}><button ${attrs} class="cell" aria-label="Add class: ${where}"></button></td>`;
         }
         const staff = subject.faculty || '';
-        return `<td${todayClass(day)}>
-          <button ${attrs} class="cell filled" style="--c:${subjectColor(subject)}" aria-label="${esc(subject.name)}, ${esc(staff)}, ${where}. Edit">
+        // The colour lives on the cell so print can draw a bar the full height of the row.
+        return `<td class="${day.key === todayKey ? 'today ' : ''}has-class" style="--c:${subjectColor(subject)}">
+          <button ${attrs} class="cell filled" aria-label="${esc(subject.name)}, ${esc(staff)}, ${where}. Edit">
             <span class="cell-subject">${esc(subject.name)}</span>
             ${subject.code ? `<span class="cell-code">${esc(subject.code)}</span>` : ''}
             ${staff ? `<span class="cell-meta">${esc(staff)}</span>` : ''}

@@ -445,5 +445,6 @@ dialog > .form { padding: 24px; }
   /* Let the table's own grid lines separate classes: no box around each one. */
   .timetable td { padding: 0; }
   .cell { border-radius: 0; padding: 9px 10px; }
-  .cell.filled { background: none; border: 0; box-shadow: inset 3px 0 0 var(--c); }
+  .cell.filled { background: none; border: 0; box-shadow: none; }
+  .timetable td.has-class { box-shadow: inset 3px 0 0 var(--c); print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }
