@@ -1,9 +1,9 @@
 /* ---------- Theme tokens (single black theme) ---------- */
 :root {
   --bg: #111111;
-  --surface: #181818;
-  --surface-2: #1f1f1f;
-  --surface-3: #262626;
+  --surface: #151515;
+  --surface-2: #181818;
+  --surface-3: #1c1c1c;
   --border: #262626;
   --border-strong: #363636;
   --text: #ededed;
