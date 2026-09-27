@@ -11,10 +11,11 @@ A black, minimal weekly timetable planner for college classes. Add your subjects
 
 ## Features
 
-- Subjects with a course code, faculty name and a colour
-- Time slots for periods and breaks. Breaks like Lunch span the whole row, the next slot is pre-filled for you, and overlapping slots are rejected
-- Rooms with a type (classroom, lab, seminar hall) and capacity, plus how many classes each room has per week
+- Your class name (such as CSE K) is asked once and appears in the heading and on printouts
+- Subjects with a subject code, staff name and a colour, all editable afterwards
+- Time slots for periods and breaks, editable too. Breaks like Lunch span the whole row, the next slot is pre-filled for you, and overlapping slots are rejected
 - Weekly grid from Monday to Saturday. Click a cell to add or edit a class, and today's column is highlighted
+- Each class shows the subject name, its code and the staff name
 - Saves automatically in your browser, with no account or server needed
 - Load sample, Print (prints a clean light version) and Reset all
 - Works on phones, not just desktops
@@ -30,6 +31,7 @@ This project was made by vibe coding: I gave Claude instructions and feedback, a
 4. Claude tested the app in a browser and fixed the bugs it found, such as the edit dialog closing by accident and the Escape key not closing it
 5. Deployed it on Vercel and uploaded it to GitHub
 6. Added Vercel Web Analytics
+7. Replaced rooms with a single class name, made subjects and time slots editable, and moved to a clearer set of colours
 
 ## Tech stack
 

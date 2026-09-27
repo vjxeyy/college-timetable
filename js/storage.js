@@ -2,16 +2,16 @@
 const TimetableStore = (() => {
   const KEY = 'college-timetable:v1';
 
-  const empty = () => ({ subjects: [], slots: [], rooms: [], entries: {} });
+  const empty = () => ({ className: '', subjects: [], slots: [], entries: {} });
 
   function load() {
     try {
       const data = JSON.parse(localStorage.getItem(KEY));
       if (!data || typeof data !== 'object') return empty();
       return {
+        className: typeof data.className === 'string' ? data.className : '',
         subjects: Array.isArray(data.subjects) ? data.subjects : [],
         slots: Array.isArray(data.slots) ? data.slots : [],
-        rooms: Array.isArray(data.rooms) ? data.rooms : [],
         entries: data.entries && typeof data.entries === 'object' ? data.entries : {},
       };
     } catch {
@@ -27,7 +27,16 @@ const TimetableStore = (() => {
     }
   }
 
+  // False only before anything has ever been saved, so the class name is asked for once.
+  function hasSaved() {
+    try {
+      return localStorage.getItem(KEY) !== null;
+    } catch {
+      return true;
+    }
+  }
+
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
-  return { load, save, empty, uid };
+  return { load, save, empty, hasSaved, uid };
 })();

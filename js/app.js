@@ -9,12 +9,18 @@
     { key: 'fri', label: 'Friday' },
     { key: 'sat', label: 'Saturday' },
   ];
-  // Soft tones that stay readable on the black theme.
-  const PALETTE = ['#8b9cff', '#5cc8d8', '#6fcf97', '#e8b86a', '#f08bb0', '#b19cf5', '#f28b82', '#62d0b8', '#7fb2ff', '#c3d96b'];
+  // Nine clearly different hues, given out in order so neighbouring subjects never look alike.
+  const PALETTE = ['#5aa9ff', '#35c8d8', '#3fd18a', '#b8d94a', '#f0c04a', '#ff9052', '#ff6f8f', '#ef7bd6', '#a98bff'];
+  // The colours the app handed out before; swapped for the new set on load.
+  const OLD_PALETTE = ['#8b9cff', '#5cc8d8', '#6fcf97', '#e8b86a', '#f08bb0', '#b19cf5', '#f28b82', '#62d0b8', '#7fb2ff', '#c3d96b'];
   const TRASH_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>';
+  const PENCIL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
 
   let state = TimetableStore.load();
-  let activeCell = null; // { day, slotId } being edited in the dialog
+  const firstRun = !TimetableStore.hasSaved();
+  let activeCell = null; // { day, slotId } being edited in the cell dialog
+  let editingSubjectId = null;
+  let editingSlotId = null;
 
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => document.querySelectorAll(sel);
@@ -24,6 +30,7 @@
   const safeColor = (c) => (/^#[0-9a-f]{6}$/i.test(c) ? c : null);
   // Subjects saved without a colour fall back to a palette tone based on their position.
   const subjectColor = (s) => safeColor(s.color) || PALETTE[Math.max(0, state.subjects.indexOf(s)) % PALETTE.length];
+  const nextColor = () => PALETTE[state.subjects.length % PALETTE.length];
   const plural = (n, one, many = one + 's') => `${n} ${n === 1 ? one : many}`;
   const findById = (list, id) => list.find((x) => x.id === id);
   const cellKey = (day, slotId) => `${day}|${slotId}`;
@@ -63,9 +70,24 @@
     toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
   }
 
-  const deleteButton = (id, name) =>
-    `<button type="button" class="icon-btn" data-delete="${esc(id)}" aria-label="Delete ${esc(name)}" title="Delete">${TRASH_ICON}</button>`;
+  const iconButton = (action, id, label, icon) =>
+    `<button type="button" class="icon-btn" data-${action}="${esc(id)}" aria-label="${label}" title="${label}">${icon}</button>`;
+  const editButton = (id, name) => iconButton('edit', id, `Edit ${esc(name)}`, PENCIL_ICON);
+  const deleteButton = (id, name) => iconButton('delete', id, `Delete ${esc(name)}`, TRASH_ICON);
   const emptyItem = (text) => `<li class="list-empty">${text}</li>`;
+
+  // Subjects coloured from the old palette move to the matching colour in the new one.
+  function migrateColors() {
+    let changed = false;
+    state.subjects.forEach((s) => {
+      const i = OLD_PALETTE.indexOf(String(s.color || '').toLowerCase());
+      if (i >= 0) {
+        s.color = PALETTE[i % PALETTE.length];
+        changed = true;
+      }
+    });
+    return changed;
+  }
 
   // ---------- Tabs ----------
   function showTab(name) {
@@ -78,86 +100,156 @@
   }
   $$('.tab').forEach((tab) => tab.addEventListener('click', () => showTab(tab.dataset.tab)));
 
-  // ---------- Add forms ----------
-  $('#form-subject').addEventListener('submit', (e) => {
+  // ---------- Subjects ----------
+  const subjectForm = $('#form-subject');
+
+  subjectForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const form = e.target;
-    const { name, code, faculty, color } = formValues(form);
-    if (state.subjects.some((s) => s.name.toLowerCase() === name.toLowerCase())) {
-      return toast('That subject already exists', 'error');
+    const { name, code, faculty, color } = formValues(subjectForm);
+    const clash = state.subjects.find((s) => s.name.toLowerCase() === name.toLowerCase() && s.id !== editingSubjectId);
+    if (clash) return toast('That subject already exists', 'error');
+
+    if (editingSubjectId) {
+      const subject = findById(state.subjects, editingSubjectId);
+      Object.assign(subject, { name, code, faculty, color: safeColor(color) || subject.color });
+      setSubjectEdit(null);
+      return commit('Subject updated');
     }
-    state.subjects.push({ id: TimetableStore.uid(), name, code, faculty, color: safeColor(color) || PALETTE[0] });
-    form.reset();
-    form.elements.color.value = PALETTE[state.subjects.length % PALETTE.length];
-    form.elements.name.focus();
+
+    state.subjects.push({ id: TimetableStore.uid(), name, code, faculty, color: safeColor(color) || nextColor() });
+    subjectForm.reset();
+    subjectForm.elements.color.value = nextColor();
+    subjectForm.elements.name.focus();
     commit('Subject added');
   });
 
-  $('#form-slot').addEventListener('submit', (e) => {
+  // Passing a subject switches the form to editing it; null returns it to adding.
+  function setSubjectEdit(subject) {
+    editingSubjectId = subject ? subject.id : null;
+    const f = subjectForm.elements;
+    if (subject) {
+      f.name.value = subject.name || '';
+      f.code.value = subject.code || '';
+      f.faculty.value = subject.faculty || '';
+      f.color.value = subjectColor(subject);
+      showTab('subjects');
+      f.name.focus();
+    } else {
+      subjectForm.reset();
+      f.color.value = nextColor();
+    }
+    $('#btn-subject-submit').textContent = subject ? 'Save changes' : 'Add subject';
+    $('#btn-subject-cancel').hidden = !subject;
+    renderSubjects();
+  }
+
+  $('#btn-subject-cancel').addEventListener('click', () => setSubjectEdit(null));
+
+  // ---------- Time slots ----------
+  const slotForm = $('#form-slot');
+
+  slotForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const form = e.target;
-    const { start, end, label, isBreak } = formValues(form);
+    const { start, end, label, isBreak } = formValues(slotForm);
     const startMin = toMinutes(start);
     const endMin = toMinutes(end);
     if (endMin <= startMin) return toast('End time must be after start time', 'error');
 
-    const clash = state.slots.find((s) => startMin < toMinutes(s.end) && toMinutes(s.start) < endMin);
+    const clash = state.slots.find((s) => s.id !== editingSlotId && startMin < toMinutes(s.end) && toMinutes(s.start) < endMin);
     if (clash) return toast(`Overlaps with ${slotRange(clash)}`, 'error');
+
+    if (editingSlotId) {
+      Object.assign(findById(state.slots, editingSlotId), { start, end, label, isBreak: Boolean(isBreak) });
+      setSlotEdit(null);
+      return commit('Time slot updated');
+    }
 
     state.slots.push({ id: TimetableStore.uid(), start, end, label, isBreak: Boolean(isBreak) });
 
     // Pre-fill the next slot so adding a full day is quick.
-    form.reset();
-    form.elements.start.value = end;
-    form.elements.end.value = fromMinutes(endMin + (endMin - startMin));
+    slotForm.reset();
+    slotForm.elements.start.value = end;
+    slotForm.elements.end.value = fromMinutes(endMin + (endMin - startMin));
     commit('Time slot added');
   });
 
-  $('#form-room').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const form = e.target;
-    const { name, type, capacity } = formValues(form);
-    if (state.rooms.some((r) => r.name.toLowerCase() === name.toLowerCase())) {
-      return toast('That room already exists', 'error');
+  function setSlotEdit(slot) {
+    editingSlotId = slot ? slot.id : null;
+    const f = slotForm.elements;
+    if (slot) {
+      f.start.value = slot.start;
+      f.end.value = slot.end;
+      f.label.value = slot.label || '';
+      f.isBreak.checked = Boolean(slot.isBreak);
+      showTab('slots');
+      f.start.focus();
+    } else {
+      slotForm.reset();
     }
-    state.rooms.push({ id: TimetableStore.uid(), name, type, capacity: capacity ? Number(capacity) : null });
-    form.reset();
-    form.elements.name.focus();
-    commit('Room added');
-  });
+    $('#btn-slot-submit').textContent = slot ? 'Save changes' : 'Add time slot';
+    $('#btn-slot-cancel').hidden = !slot;
+    renderSlots();
+  }
 
-  // ---------- Delete (event delegation) ----------
-  function onDelete(listSelector, handler) {
+  $('#btn-slot-cancel').addEventListener('click', () => setSlotEdit(null));
+
+  // ---------- List buttons (event delegation) ----------
+  function onList(listSelector, handlers) {
     $(listSelector).addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-delete]');
-      if (btn) handler(btn.dataset.delete);
+      const edit = e.target.closest('[data-edit]');
+      if (edit) return handlers.edit(edit.dataset.edit);
+      const remove = e.target.closest('[data-delete]');
+      if (remove) return handlers.remove(remove.dataset.delete);
     });
   }
 
-  onDelete('#list-subjects', (id) => {
-    const subject = findById(state.subjects, id);
-    const used = entriesWhere((e) => e.subjectId === id);
-    if (used.length && !confirm(`"${subject.name}" is scheduled in ${plural(used.length, 'class', 'classes')}. Delete it and remove those classes?`)) return;
-    used.forEach(([key]) => delete state.entries[key]);
-    state.subjects = state.subjects.filter((s) => s.id !== id);
-    commit('Subject deleted');
+  onList('#list-subjects', {
+    edit: (id) => setSubjectEdit(findById(state.subjects, id)),
+    remove: (id) => {
+      const subject = findById(state.subjects, id);
+      const used = entriesWhere((e) => e.subjectId === id);
+      if (used.length && !confirm(`"${subject.name}" is scheduled in ${plural(used.length, 'class', 'classes')}. Delete it and remove those classes?`)) return;
+      used.forEach(([key]) => delete state.entries[key]);
+      state.subjects = state.subjects.filter((s) => s.id !== id);
+      if (editingSubjectId === id) setSubjectEdit(null);
+      commit('Subject deleted');
+    },
   });
 
-  onDelete('#list-slots', (id) => {
-    const used = entriesWhere((_, key) => key.endsWith(`|${id}`));
-    if (used.length && !confirm(`This slot has ${plural(used.length, 'class', 'classes')} scheduled. Delete it anyway?`)) return;
-    used.forEach(([key]) => delete state.entries[key]);
-    state.slots = state.slots.filter((s) => s.id !== id);
-    commit('Time slot deleted');
+  onList('#list-slots', {
+    edit: (id) => setSlotEdit(findById(state.slots, id)),
+    remove: (id) => {
+      const used = entriesWhere((_, key) => key.endsWith(`|${id}`));
+      if (used.length && !confirm(`This slot has ${plural(used.length, 'class', 'classes')} scheduled. Delete it anyway?`)) return;
+      used.forEach(([key]) => delete state.entries[key]);
+      state.slots = state.slots.filter((s) => s.id !== id);
+      if (editingSlotId === id) setSlotEdit(null);
+      commit('Time slot deleted');
+    },
   });
 
-  onDelete('#list-rooms', (id) => {
-    const room = findById(state.rooms, id);
-    const used = entriesWhere((e) => e.roomId === id);
-    if (used.length && !confirm(`"${room.name}" is used by ${plural(used.length, 'class', 'classes')}. Delete it? Those classes will keep their subject but lose the room.`)) return;
-    used.forEach(([, entry]) => (entry.roomId = ''));
-    state.rooms = state.rooms.filter((r) => r.id !== id);
-    commit('Room deleted');
+  // ---------- Class name ----------
+  const classDialog = $('#class-dialog');
+  const classForm = $('#form-class');
+
+  function openClassDialog() {
+    classForm.elements.name.value = state.className || '';
+    classDialog.showModal();
+    classForm.elements.name.focus();
+  }
+
+  $('#btn-class').addEventListener('click', openClassDialog);
+
+  classForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    state.className = formValues(classForm).name;
+    classDialog.close();
+    commit(state.className ? `Class set to ${state.className}` : 'Class name cleared');
+  });
+
+  $('#btn-class-skip').addEventListener('click', () => {
+    classDialog.close();
+    commit();
   });
 
   // ---------- Cell dialog ----------
@@ -167,7 +259,7 @@
   function openCellDialog(day, slotId) {
     if (!state.subjects.length) {
       showTab('subjects');
-      $('#form-subject').elements.name.focus();
+      subjectForm.elements.name.focus();
       return toast('Add a subject first', 'error');
     }
     activeCell = { day, slotId };
@@ -180,20 +272,15 @@
     cellForm.elements.subjectId.innerHTML =
       '<option value="">Select a subject…</option>' +
       state.subjects.map((s) => `<option value="${esc(s.id)}">${esc(s.name)}${s.code ? ` (${esc(s.code)})` : ''}</option>`).join('');
-    cellForm.elements.roomId.innerHTML =
-      '<option value="">No room</option>' +
-      state.rooms.map((r) => `<option value="${esc(r.id)}">${esc(r.name)}${r.type ? ` · ${esc(r.type)}` : ''}</option>`).join('');
-
     cellForm.elements.subjectId.value = entry.subjectId || '';
-    cellForm.elements.roomId.value = entry.roomId || '';
     $('#btn-cell-clear').hidden = !entry.subjectId;
     dialog.showModal();
   }
 
   cellForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const { subjectId, roomId } = formValues(cellForm);
-    state.entries[cellKey(activeCell.day, activeCell.slotId)] = { subjectId, roomId };
+    const { subjectId } = formValues(cellForm);
+    state.entries[cellKey(activeCell.day, activeCell.slotId)] = { subjectId };
     dialog.close();
     commit('Class saved');
   });
@@ -205,12 +292,15 @@
   });
 
   $('#btn-cell-cancel').addEventListener('click', () => dialog.close());
+
   // Browsers close <dialog> on Escape natively; this covers embedded browsers that don't.
-  dialog.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') dialog.close();
-  });
-  dialog.addEventListener('click', (e) => {
-    if (e.target === dialog) dialog.close(); // click on backdrop
+  [dialog, classDialog].forEach((d) => {
+    d.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') d.close();
+    });
+    d.addEventListener('click', (e) => {
+      if (e.target === d) d.close(); // click on backdrop
+    });
   });
 
   $('#timetable').addEventListener('click', (e) => {
@@ -222,27 +312,40 @@
   $('#btn-print').addEventListener('click', () => window.print());
 
   $('#btn-reset').addEventListener('click', () => {
-    if (!confirm('Delete all subjects, time slots, rooms and classes? This cannot be undone.')) return;
+    if (!confirm('Delete all subjects, time slots and classes? This cannot be undone.')) return;
+    const keepClass = state.className;
     state = TimetableStore.empty();
+    state.className = keepClass;
+    setSubjectEdit(null);
+    setSlotEdit(null);
     commit('Everything cleared');
   });
 
   $('#btn-sample').addEventListener('click', () => {
-    const hasData = state.subjects.length || state.slots.length || state.rooms.length;
+    const hasData = state.subjects.length || state.slots.length;
     if (hasData && !confirm('Replace your current timetable with sample data?')) return;
+    const keepClass = state.className;
     state = sampleData();
+    state.className = keepClass;
+    setSubjectEdit(null);
+    setSlotEdit(null);
     commit('Sample timetable loaded');
   });
 
   // ---------- Rendering ----------
   function render() {
+    applyBrand();
     renderSubjects();
     renderSlots();
-    renderRooms();
     renderTimetable();
     $('#count-subjects').textContent = state.subjects.length;
     $('#count-slots').textContent = state.slots.length;
-    $('#count-rooms').textContent = state.rooms.length;
+  }
+
+  function applyBrand() {
+    const label = state.className ? `${state.className} Timetable` : 'College Timetable';
+    $('#brand-title').textContent = label;
+    document.title = label;
   }
 
   function renderSubjects() {
@@ -250,12 +353,13 @@
       ? state.subjects.map((s) => {
           const count = entriesWhere((e) => e.subjectId === s.id).length;
           const meta = [s.code, s.faculty, `${plural(count, 'class', 'classes')}/week`].filter(Boolean).join(' · ');
-          return `<li class="item">
+          return `<li class="item${s.id === editingSubjectId ? ' editing' : ''}">
             <span class="swatch" style="--c:${subjectColor(s)}"></span>
             <div class="item-main">
               <div class="item-title">${esc(s.name)}</div>
               <div class="item-meta">${esc(meta)}</div>
             </div>
+            ${editButton(s.id, s.name)}
             ${deleteButton(s.id, s.name)}
           </li>`;
         }).join('')
@@ -267,31 +371,16 @@
       ? sortedSlots().map((s) => {
           const minutes = toMinutes(s.end) - toMinutes(s.start);
           const meta = [s.label, `${minutes} min`].filter(Boolean).join(' · ');
-          return `<li class="item">
+          return `<li class="item${s.id === editingSlotId ? ' editing' : ''}">
             <div class="item-main">
               <div class="item-title">${slotRange(s)}${s.isBreak ? '<span class="badge">Break</span>' : ''}</div>
               <div class="item-meta">${esc(meta)}</div>
             </div>
+            ${editButton(s.id, slotRange(s))}
             ${deleteButton(s.id, slotRange(s))}
           </li>`;
         }).join('')
       : emptyItem('No time slots yet. Add periods and breaks above.');
-  }
-
-  function renderRooms() {
-    $('#list-rooms').innerHTML = state.rooms.length
-      ? state.rooms.map((r) => {
-          const count = entriesWhere((e) => e.roomId === r.id).length;
-          const meta = [r.type, r.capacity ? `${r.capacity} seats` : '', `${plural(count, 'class', 'classes')}/week`].filter(Boolean).join(' · ');
-          return `<li class="item">
-            <div class="item-main">
-              <div class="item-title">${esc(r.name)}</div>
-              <div class="item-meta">${esc(meta)}</div>
-            </div>
-            ${deleteButton(r.id, r.name)}
-          </li>`;
-        }).join('')
-      : emptyItem('No rooms yet. Add classrooms and labs above.');
   }
 
   function renderTimetable() {
@@ -332,13 +421,12 @@
         if (!subject) {
           return `<td${todayClass(day)}><button ${attrs} class="cell" aria-label="Add class: ${where}"></button></td>`;
         }
-        const room = findById(state.rooms, entry.roomId);
-        const meta = [room && room.name, subject.faculty].filter(Boolean).join(' · ');
+        const staff = subject.faculty || '';
         return `<td${todayClass(day)}>
-          <button ${attrs} class="cell filled" style="--c:${subjectColor(subject)}" aria-label="${esc(subject.name)}, ${esc(meta)}, ${where}. Edit">
+          <button ${attrs} class="cell filled" style="--c:${subjectColor(subject)}" aria-label="${esc(subject.name)}, ${esc(staff)}, ${where}. Edit">
             <span class="cell-subject">${esc(subject.name)}</span>
             ${subject.code ? `<span class="cell-code">${esc(subject.code)}</span>` : ''}
-            <span class="cell-meta">${esc(meta)}</span>
+            ${staff ? `<span class="cell-meta">${esc(staff)}</span>` : ''}
           </button>
         </td>`;
       }).join('');
@@ -352,59 +440,49 @@
   // ---------- Sample data ----------
   function sampleData() {
     const subjects = [
-      { name: 'Data Structures', code: 'CS201', faculty: 'Dr. Meera Iyer' },
-      { name: 'Database Systems', code: 'CS202', faculty: 'Prof. Arjun Nair' },
-      { name: 'Operating Systems', code: 'CS203', faculty: 'Dr. Kavya Rao' },
-      { name: 'Discrete Mathematics', code: 'MA201', faculty: 'Prof. S. Kumar' },
-      { name: 'Computer Networks', code: 'CS204', faculty: 'Dr. Rahul Menon' },
-      { name: 'Data Structures Lab', code: 'CS251', faculty: 'Dr. Meera Iyer' },
+      { name: 'Matrices and Calculus', code: 'MA25C01', faculty: 'Dr. G. Meena' },
+      { name: 'Applied Physics', code: 'PH2506', faculty: 'Dr. M. Suresh' },
+      { name: 'Fundamentals of IOT', code: 'EC25C01', faculty: 'Mr. S. S. Hari' },
+      { name: 'Problem Solving and Programming', code: 'CS25C01', faculty: 'Ms. J. Asha' },
+      { name: 'Artificial Intelligence and Machine Learning', code: 'CS25C03', faculty: 'Ms. M. Jeya' },
+      { name: 'Professional English - 1', code: 'EN25C09', faculty: 'Mrs. Sathya' },
     ].map((s, i) => ({ id: TimetableStore.uid(), ...s, color: PALETTE[i] }));
 
-    const rooms = [
-      { name: 'LH-101', type: 'Classroom', capacity: 60 },
-      { name: 'LH-102', type: 'Classroom', capacity: 60 },
-      { name: 'CS Lab 2', type: 'Lab', capacity: 40 },
-      { name: 'Seminar Hall', type: 'Seminar hall', capacity: 120 },
-    ].map((r) => ({ id: TimetableStore.uid(), ...r }));
-
     const slots = [
-      ['09:00', '09:50', 'Period 1'],
-      ['09:50', '10:40', 'Period 2'],
-      ['10:40', '11:00', 'Short break', true],
-      ['11:00', '11:50', 'Period 3'],
-      ['11:50', '12:40', 'Period 4'],
-      ['12:40', '13:30', 'Lunch', true],
-      ['13:30', '14:20', 'Period 5'],
-      ['14:20', '15:10', 'Period 6'],
+      ['08:00', '08:40', '1'],
+      ['08:40', '09:20', '2'],
+      ['09:20', '09:30', 'Break', true],
+      ['09:30', '10:10', '3'],
+      ['10:10', '10:50', '4'],
+      ['10:50', '11:30', 'Lunch', true],
+      ['11:30', '12:10', '5'],
+      ['12:10', '12:50', '6'],
     ].map(([start, end, label, isBreak = false]) => ({ id: TimetableStore.uid(), start, end, label, isBreak }));
 
     // Subject index per teaching period (-1 = free period).
     const plan = {
-      mon: [0, 1, 3, 2, 5, 5],
-      tue: [1, 0, 2, 4, 3, -1],
-      wed: [3, 2, 0, 1, 4, -1],
-      thu: [4, 3, 1, 0, 5, 5],
-      fri: [2, 4, 3, 1, 0, -1],
+      mon: [0, 2, 4, 5, 3, 3],
+      tue: [1, 1, 2, 0, 0, 4],
+      wed: [0, 2, 4, 1, 3, 3],
+      thu: [1, 1, 1, 0, 4, 4],
+      fri: [0, 1, 3, 0, 5, 2],
       sat: [0, 3, -1, -1, -1, -1],
     };
-    const roomFor = (subjectIndex, dayIndex) =>
-      subjectIndex === 5 ? rooms[2] : subjectIndex === 4 ? rooms[3] : rooms[dayIndex % 2];
 
     const teaching = slots.filter((s) => !s.isBreak);
     const entries = {};
-    DAYS.forEach((day, dayIndex) => {
+    DAYS.forEach((day) => {
       plan[day.key].forEach((subjectIndex, period) => {
         if (subjectIndex < 0) return;
-        entries[cellKey(day.key, teaching[period].id)] = {
-          subjectId: subjects[subjectIndex].id,
-          roomId: roomFor(subjectIndex, dayIndex).id,
-        };
+        entries[cellKey(day.key, teaching[period].id)] = { subjectId: subjects[subjectIndex].id };
       });
     });
 
-    return { subjects, slots, rooms, entries };
+    return { className: '', subjects, slots, entries };
   }
 
-  $('#form-subject').elements.color.value = PALETTE[state.subjects.length % PALETTE.length];
+  if (migrateColors()) TimetableStore.save(state);
+  subjectForm.elements.color.value = nextColor();
   render();
+  if (firstRun) openClassDialog();
 })();
