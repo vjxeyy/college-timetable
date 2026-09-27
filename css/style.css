@@ -427,4 +427,10 @@ dialog > .form { padding: 24px; }
   .table-wrap { overflow: visible; }
   .timetable { min-width: 0; }
   .cell { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  /* On paper there is no hover or scrolling, so let every name print in full. */
+  .timetable td { height: auto; }
+  .cell { min-height: 0; }
+  .cell-subject { display: block; -webkit-line-clamp: none; overflow: visible; }
+  .cell-meta { white-space: normal; overflow: visible; text-overflow: clip; }
+  .timetable tr { break-inside: avoid; page-break-inside: avoid; }
 }

@@ -333,7 +333,7 @@
           return `<td${todayClass(day)}><button ${attrs} class="cell" aria-label="Add class: ${where}"></button></td>`;
         }
         const room = findById(state.rooms, entry.roomId);
-        const meta = [room ? room.name : 'No room', subject.faculty].filter(Boolean).join(' · ');
+        const meta = [room && room.name, subject.faculty].filter(Boolean).join(' · ');
         return `<td${todayClass(day)}>
           <button ${attrs} class="cell filled" style="--c:${subjectColor(subject)}" aria-label="${esc(subject.name)}, ${esc(meta)}, ${where}. Edit">
             <span class="cell-subject">${esc(subject.name)}</span>
