@@ -54,7 +54,8 @@ h1, h2, h3 { margin: 0; line-height: 1.2; font-weight: 600; letter-spacing: -0.0
 .brand h1 { font-size: 1.6rem; }
 #btn-class { width: 26px; height: 26px; }
 #btn-class svg { width: 13px; height: 13px; }
-.brand p { margin: 6px 0 0; color: var(--muted); font-size: 13.5px; }
+.brand-class { margin: 6px 0 0; font-size: 15px; font-weight: 600; color: var(--text); }
+.brand-sub { margin: 4px 0 0; color: var(--muted); font-size: 13.5px; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
 /* ---------- Buttons ---------- */
@@ -428,7 +429,7 @@ dialog > .form { padding: 24px; }
     --faint: #666;
     --accent: #000;
   }
-  .actions, .panel, .hint, .toast, #btn-class, .brand p { display: none !important; }
+  .actions, .panel, .hint, .toast, #btn-class, .brand-sub { display: none !important; }
   .topbar { padding: 0 0 12px; }
   .layout { display: block; padding: 0; }
   .board { border: 0; padding: 0; }

@@ -343,9 +343,10 @@
   }
 
   function applyBrand() {
-    const label = state.className ? `${state.className} Timetable` : 'College Timetable';
-    $('#brand-title').textContent = label;
-    document.title = label;
+    const line = $('#brand-class');
+    line.textContent = state.className || '';
+    line.hidden = !state.className;
+    document.title = state.className ? `${state.className} Timetable` : 'College Timetable';
   }
 
   function renderSubjects() {
