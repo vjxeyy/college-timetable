@@ -428,7 +428,7 @@ dialog > .form { padding: 24px; }
     --faint: #666;
     --accent: #000;
   }
-  .actions, .panel, .hint, .toast, #btn-class { display: none !important; }
+  .actions, .panel, .hint, .toast, #btn-class, .brand p { display: none !important; }
   .topbar { padding: 0 0 12px; }
   .layout { display: block; padding: 0; }
   .board { border: 0; padding: 0; }
@@ -441,4 +441,8 @@ dialog > .form { padding: 24px; }
   .cell-subject { display: block; -webkit-line-clamp: none; overflow: visible; }
   .cell-meta { white-space: normal; overflow: visible; text-overflow: clip; }
   .timetable tr { break-inside: avoid; page-break-inside: avoid; }
+  /* Let the table's own grid lines separate classes: no box around each one. */
+  .timetable td { padding: 0; }
+  .cell { border-radius: 0; padding: 9px 10px; }
+  .cell.filled { background: none; border: 0; box-shadow: inset 3px 0 0 var(--c); }
 }
