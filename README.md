@@ -1,6 +1,6 @@
 # College Timetable
 
-A black, minimal weekly timetable planner for college classes. Add your subjects, time slots and rooms, then click any cell to schedule a class.
+A minimal, charcoal-themed weekly timetable planner for college classes. Set your class, add subjects and time slots, then click any cell to schedule a class.
 
 **Live demo:** https://college-timetable-vjxeyy.vercel.app
 
@@ -11,13 +11,14 @@ A black, minimal weekly timetable planner for college classes. Add your subjects
 
 ## Features
 
-- Your class name (such as CSE K) is asked once and appears in the heading and on printouts
+- Your class name (such as CSE K) is asked once and shown under the title, with a pencil next to it to change it anytime
 - Subjects with a subject code, staff name and a colour, all editable afterwards
 - Time slots for periods and breaks, editable too. Breaks like Lunch span the whole row, the next slot is pre-filled for you, and overlapping slots are rejected
 - Weekly grid from Monday to Saturday. Click a cell to add or edit a class, and today's column is highlighted
 - Each class shows the subject name, its code and the staff name
 - Saves automatically in your browser, with no account or server needed
-- Load sample, Print (prints a clean light version) and Reset all
+- Print gives a clean white page with full subject names and the whole week on one sheet
+- Load sample and Reset all
 - Works on phones, not just desktops
 - Vercel Web Analytics to count visitors
 
@@ -32,6 +33,8 @@ This project was made by vibe coding: I gave Claude instructions and feedback, a
 5. Deployed it on Vercel and uploaded it to GitHub
 6. Added Vercel Web Analytics
 7. Replaced rooms with a single class name, made subjects and time slots editable, and moved to a clearer set of colours
+8. Fixed the printout: full subject names, colour bars aligned to each row, and the week on one page
+9. Switched to a charcoal colour scheme (#111111, #151515 and #181818)
 
 ## Tech stack
 
@@ -43,9 +46,9 @@ This project was made by vibe coding: I gave Claude instructions and feedback, a
 
 ```
 college-timetable/
-├── index.html                     # Page layout: header, sidebar tabs, weekly grid, edit dialog
+├── index.html                     # Page layout: header, sidebar tabs, weekly grid, dialogs
 ├── css/
-│   └── style.css                  # Black theme, responsive layout, print styles
+│   └── style.css                  # Charcoal theme, responsive layout, print styles
 ├── js/
 │   ├── storage.js                 # Saves and loads data in the browser (localStorage)
 │   └── app.js                     # Forms, validation, timetable rendering and events
