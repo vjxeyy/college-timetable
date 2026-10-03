@@ -462,5 +462,14 @@ dialog > .form { padding: 24px; }
   .timetable td { padding: 0; }
   .cell { border-radius: 0; padding: 9px 10px; }
   .cell.filled { background: none; border: 0; box-shadow: none; }
-  .timetable td.has-class { box-shadow: inset 3px 0 0 var(--c); print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  /* Paper gets a plain, fully ruled grid: collapsed borders print reliably at any print scale,
+     and the colour bar is a real border rather than an inset shadow. */
+  .table-wrap { border: 0; }
+  .timetable { border-collapse: collapse; }
+  .timetable th, .timetable td, .timetable tr > :last-child, .timetable tbody tr:last-child > * { border: 1px solid #cfcfcf; }
+  .timetable tbody td.has-class { border-left: 3px solid var(--c); print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  /* "Today" is a screen aid; a printout should look the same on any day. */
+  .timetable thead th.today { color: var(--faint); }
+  .timetable thead th.today::after { display: none; }
+  .timetable td.today { background: none; }
 }
